@@ -1,7 +1,8 @@
 package server
 
 import (
-	v1 "review-service/api/helloworld/v1"
+	"github.com/go-kratos/kratos/v2/middleware/validate"
+	v1 "review-service/api/review/v1"
 	"review-service/internal/conf"
 	"review-service/internal/service"
 
@@ -11,10 +12,11 @@ import (
 )
 
 // NewHTTPServer new an HTTP server.
-func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, logger log.Logger) *http.Server {
+func NewHTTPServer(c *conf.Server, review *service.ReviewService, logger log.Logger) *http.Server {
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
+			validate.Validator(),
 		),
 	}
 	if c.Http.Network != "" {
@@ -27,6 +29,6 @@ func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, logger log.L
 		opts = append(opts, http.Timeout(c.Http.Timeout.AsDuration()))
 	}
 	srv := http.NewServer(opts...)
-	v1.RegisterGreeterHTTPServer(srv, greeter)
+	v1.RegisterReviewHTTPServer(srv, review)
 	return srv
 }

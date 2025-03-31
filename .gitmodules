@@ -1,0 +1,3 @@
+[submodule "review-b/api"]
+	path = review-b/api
+	url = git@github.com:Q1mi/reviewapis.git

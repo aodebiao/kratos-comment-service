@@ -1,7 +1,8 @@
 package server
 
 import (
-	v1 "review-service/api/helloworld/v1"
+	"github.com/go-kratos/kratos/v2/middleware/validate"
+	v1 "review-service/api/review/v1"
 	"review-service/internal/conf"
 	"review-service/internal/service"
 
@@ -11,10 +12,13 @@ import (
 )
 
 // NewGRPCServer new a gRPC server.
-func NewGRPCServer(c *conf.Server, greeter *service.GreeterService, logger log.Logger) *grpc.Server {
+// 改 review参数
+func NewGRPCServer(c *conf.Server, review *service.ReviewService, logger log.Logger) *grpc.Server {
 	var opts = []grpc.ServerOption{
 		grpc.Middleware(
 			recovery.Recovery(),
+			validate.Validator(),
+			//v2.ProtoValidate(),
 		),
 	}
 	if c.Grpc.Network != "" {
@@ -27,6 +31,6 @@ func NewGRPCServer(c *conf.Server, greeter *service.GreeterService, logger log.L
 		opts = append(opts, grpc.Timeout(c.Grpc.Timeout.AsDuration()))
 	}
 	srv := grpc.NewServer(opts...)
-	v1.RegisterGreeterServer(srv, greeter)
+	v1.RegisterReviewServer(srv, review) // 改
 	return srv
 }
