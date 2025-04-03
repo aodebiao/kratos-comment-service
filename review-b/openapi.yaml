@@ -3,37 +3,49 @@
 
 openapi: 3.0.3
 info:
-    title: Greeter API
-    description: The greeting service definition.
+    title: Business API
+    description: 商家端服务
     version: 0.0.1
 paths:
-    /helloworld/{name}:
-        get:
+    /business/v1/review/reply:
+        post:
             tags:
-                - Greeter
-                - subgroup
-            description: Sends a greeting
-            operationId: Greeter_SayHello
-            parameters:
-                - name: name
-                  in: path
-                  required: true
-                  schema:
-                    type: string
+                - Business
+            description: 商用回复用户评价
+            operationId: Business_ReplyReview
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.business.v1.ReplyReviewRequest'
+                required: true
             responses:
                 "200":
                     description: OK
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/helloworld.v1.HelloReply'
+                                $ref: '#/components/schemas/api.business.v1.ReplyReviewReply'
 components:
     schemas:
-        helloworld.v1.HelloReply:
+        api.business.v1.ReplyReviewReply:
             type: object
             properties:
-                message:
+                replyID:
                     type: string
-            description: The response message containing the greetings
+            description: 回复评价的返回值
+        api.business.v1.ReplyReviewRequest:
+            type: object
+            properties:
+                reviewID:
+                    type: string
+                storeID:
+                    type: string
+                content:
+                    type: string
+                picInfo:
+                    type: string
+                videoInfo:
+                    type: string
 tags:
-    - name: Greeter
+    - name: Business

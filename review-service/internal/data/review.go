@@ -27,7 +27,7 @@ func (r *reviewRepo) SaveReply(ctx context.Context, info *model.ReviewReplyInfo)
 	// 1.1数据校验合法性（已 回复的评价不允许商家再次回复）
 	// 先用评价id查库，看下是否已经回复
 	review, err := r.data.query.ReviewInfo.WithContext(ctx).
-		Where(r.data.query.ReviewInfo.ReviewID.Eq(info.ReplyID)).First()
+		Where(r.data.query.ReviewInfo.ReviewID.Eq(info.ReviewID)).First()
 	if err != nil {
 		return nil, err
 	}

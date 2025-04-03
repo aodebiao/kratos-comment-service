@@ -19,6 +19,10 @@ protoc --proto_path=./internal --proto_path=./third_party --go_out=paths=source_
 按照要求编写proto文件
 
 ### 2、生成客户端和服务端代码
+- api
+  protoc -I=./api -I=./third_party --go_out=paths=source_relative:./api --go-http_out=paths=source_relative:./api --go-grpc_out=paths=source_relative:./api \
+  --openapi_out=fq_schema_naming=true,default_response=false:. api/business/v1/business.proto
+
 - server
   kratos proto server api/review/v1/review.proto -t internal/service 
 - client
@@ -164,3 +168,114 @@ func (r *reviewRepo) SaveReply(ctx context.Context, info *model.ReviewReplyInfo)
   # 从该项目中抓取所有数据并检出父项目中列表的合适的提交
   git submodule update
 `
+
+### data层注入rpc客户端，调用其它rpc服务
+```
+// data层
+type Data struct {
+	// TODO wrapped database client
+	// 嵌入一个grpc Client端，去调用review-service服务
+	rc  v1.ReviewClient
+	log *log.Helper
+}
+
+func NewReviewServiceClient() v1.ReviewClient {
+	// 	"github.com/go-kratos/kratos/v2/transport/grpc"
+	conn, err := grpc.DialInsecure(context.Background(),
+		grpc.WithEndpoint("127.0.0.1:9000"),
+		grpc.WithMiddleware(recovery.Recovery(), validate.Validator()),
+	)
+	if err != nil {
+		panic(err)
+	}
+	return v1.NewReviewClient(conn)
+}
+
+// NewData .
+func NewData(c *conf.Data, rc v1.ReviewClient, logger log.Logger) (*Data, func(), error) {
+	cleanup := func() {
+		log.NewHelper(logger).Info("closing the data resources")
+	}
+	return &Data{
+		rc:  rc,
+		log: log.NewHelper(logger),
+	}, cleanup, nil
+}
+
+
+
+--------------------------
+// 使用rc客户端
+func (b *businessRepo) Reply(ctx context.Context, param *biz.ReplyParam) (int64, error) {
+	b.log.WithContext(ctx).Infof("[data] Reply: params:%v", param)
+	// 之前都是操作数据库，现在调用rpc服务实现
+	ret, err := b.data.rc.ReplyReview(ctx, &v1.ReplyReviewRequest{
+		ReviewID:  param.ReviewID,
+		StoreID:   param.StoreID,
+		Content:   param.Content,
+		PicInfo:   param.PicInfo,
+		VideoInfo: param.VideoInfo,
+	})
+	b.log.WithContext(ctx).Debugf("[data] Reply: ret:%v, err:%v", ret, err)
+	if err != nil {
+		b.log.WithContext(ctx).Infof("[data] Reply: err:%v", err)
+		return 0, err
+	}
+	return ret.ReplyID, nil
+}
+
+```
+
+### 服务注册
+#### 新增配置
+```
+
+
+// config.proto文件 注册中心相关配置
+message Registry {
+  message Consul {
+    string address = 1;
+    string scheme =2;
+  }
+  Consul consul = 1;
+}
+
+// register.yaml 配置文件
+consul:
+  address: 127.0.0.1:8500
+  scheme: http
+```
+
+#### 修改完config.proto文件后，重新生成文件
+` protoc --proto_path=./internal \
+--proto_path=./third_party \
+--go_out=paths=source_relative:./internal \
+internal/conf/conf.proto
+`
+
+- main.go
+```
+	var bc conf.Bootstrap
+	if err := c.Scan(&bc); err != nil {
+		panic(err)
+	}
+
+	// 解析register.yaml配置文件
+	var rc conf.Registry
+	if err := c.Scan(&rc); err != nil {
+		panic(err)
+	}
+    // 如果像这样单独解析regsiter.yaml(未合并到config.yaml)，需要修改wire.go文件
+	app, cleanup, err := wireApp(bc.Server, &rc, bc.Data, logger)
+	
+	
+	//wire.go
+	
+	// 单独解析register，需要在wire.go函数中手动新增一个形参，*conf.Registry
+    func wireApp(*conf.Server, *conf.Registry, *conf.Data, log.Logger) (*kratos.App, func(), error) {
+	  panic(wire.Build(server.ProviderSet, data.ProviderSet, biz.ProviderSet, service.ProviderSet, newApp))
+    }
+
+```
+
+### 服务发现
