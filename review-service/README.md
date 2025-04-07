@@ -162,6 +162,9 @@ func (r *reviewRepo) SaveReply(ctx context.Context, info *model.ReviewReplyInfo)
 - 1. kratos new test-submodule
 - 2. 删除直接删除该项目目录的api文件
 - 3. 运行 `git submodule add git@github.com:Q1mi/reviewapis.git ./api  # 也就是说，当前项目下的api目录是引用了另一个git仓库
+- 3.1 如果步骤报错，goland  git submodule add git@github.com:xxx/xxx.git ./api
+  报错提示fatal: 'x-x/api' already exists in the index，类似这种，解决git rm -r --cached api
+
 - 4. 常用命令
   # 用来初始化本地配置文件
   git submodule init
@@ -278,4 +281,32 @@ internal/conf/conf.proto
 
 ```
 
-### 服务发现
+### 服务发现(参考review-o,review-b中的data层)
+
+
+### canal使用
+
+#### 修改mysql配置
+- 修改mysql的配置文件(my.conf)
+```
+[mysqld]
+log-bin=mysql-bin
+binlog-format=ROW
+server_id=1 # 配置mysql replaction需要定义，不要和canal的slaveId重复
+```
+
+- 添加授权
+```
+create user canal identified by 'canal'; # 创建一个用户名和密码都为canal的账号
+
+grant select,replication slave,replication client on *.* to 'canal'@'%'; # 赋予权限
+
+flush privileges; # 刷新权限
+```
+
+
+### docker pull canal/canal-server:latest
+
+### docker exec -it canal-server /bin/bash
+
+### 

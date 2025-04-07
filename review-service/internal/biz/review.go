@@ -17,7 +17,7 @@ type ReviewRepo interface {
 	SaveReply(context.Context, *model.ReviewReplyInfo) (*model.ReviewReplyInfo, error)
 	GetReviewReply(context.Context, int64) (*model.ReviewReplyInfo, error)
 	AuditReview(context.Context, *AuditParam) error
-	AppealReview(context.Context, *AppealParam) error
+	AppealReview(context.Context, *AppealParam) (*model.ReviewAppealInfo, error)
 	AuditAppeal(context.Context, *AuditAppealParam) error
 	ListReviewByUserID(ctx context.Context, userID int64, offset, limit int) ([]*model.ReviewInfo, error)
 }
@@ -89,7 +89,27 @@ func (uc *ReviewUsecase) AuditReview(ctx context.Context, param *AuditParam) err
 }
 
 // AppealReview 申诉评价
-func (uc ReviewUsecase) AppealReview(ctx context.Context, param *AppealParam) error {
+func (uc ReviewUsecase) AppealReview(ctx context.Context, param *AppealParam) (*model.ReviewAppealInfo, error) {
 	uc.log.WithContext(ctx).Debugf("[biz] AppealReview param:%v", param)
 	return uc.repo.AppealReview(ctx, param)
+}
+
+// AuditAppeal 审核申诉
+func (uc ReviewUsecase) AuditAppeal(ctx context.Context, param *AuditAppealParam) error {
+	uc.log.WithContext(ctx).Debugf("[biz] AuditAppeal param:%v", param)
+	return uc.repo.AuditAppeal(ctx, param)
+}
+
+// ListReviewByUserID 根据userID分页查询评价
+func (uc ReviewUsecase) ListReviewByUserID(ctx context.Context, userID int64, page, size int) ([]*model.ReviewInfo, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if size <= 0 || size > 50 {
+		size = 10
+	}
+	offset := (page - 1) * size
+	limit := size
+	uc.log.WithContext(ctx).Debugf("[biz] ListReviewByUserID userID:%v", userID)
+	return uc.repo.ListReviewByUserID(ctx, userID, offset, limit)
 }
