@@ -71,3 +71,26 @@ func (s *ReviewService) AuditAppeal(ctx context.Context, req *pb.AuditAppealRequ
 func (s *ReviewService) ListReviewByUserID(ctx context.Context, req *pb.ListReviewByUserIDRequest) (*pb.ListReviewByUserIDReply, error) {
 	return &pb.ListReviewByUserIDReply{}, nil
 }
+
+func (s *ReviewService) ListReviewByStoreID(ctx context.Context, req *pb.ListReviewByStoreIDRequest) (*pb.ListReviewByStoreIDReply, error) {
+	fmt.Printf("[service] ListReviewByStoreID req:%#v\n", req)
+	ret, err := s.uc.ListReviewByStoreID(ctx, req.StoreID, int(req.Page), int(req.Size))
+	if err != nil {
+		return nil, err
+	}
+	list := make([]*pb.ReviewInfo, 0, len(ret))
+	for _, v := range ret {
+		list = append(list, &pb.ReviewInfo{
+			UserID:       v.UserID,
+			ReviewID:     v.ReviewID,
+			OrderID:      v.OrderID,
+			Score:        v.Score,
+			Content:      v.Content,
+			Status:       v.Status,
+			VideoInfo:    v.VideoInfo,
+			ServiceScore: v.ServiceScore,
+			ExpressScore: v.ExpressScore,
+		})
+	}
+	return &pb.ListReviewByStoreIDReply{List: list}, nil
+}

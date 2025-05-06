@@ -6,6 +6,8 @@ import (
 	v1 "review-service/api/review/v1"
 	"review-service/internal/data/model"
 	"review-service/pkg/snowflake"
+	"strings"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 )
@@ -20,6 +22,7 @@ type ReviewRepo interface {
 	AppealReview(context.Context, *AppealParam) (*model.ReviewAppealInfo, error)
 	AuditAppeal(context.Context, *AuditAppealParam) error
 	ListReviewByUserID(ctx context.Context, userID int64, offset, limit int) ([]*model.ReviewInfo, error)
+	ListReviewByStoreID(ctx context.Context, userID int64, offset, limit int) ([]*MyReviewInfo, error)
 }
 
 type ReviewUsecase struct {
@@ -112,4 +115,54 @@ func (uc ReviewUsecase) ListReviewByUserID(ctx context.Context, userID int64, pa
 	limit := size
 	uc.log.WithContext(ctx).Debugf("[biz] ListReviewByUserID userID:%v", userID)
 	return uc.repo.ListReviewByUserID(ctx, userID, offset, limit)
+}
+
+func (uc ReviewUsecase) ListReviewByStoreID(ctx context.Context, storeID int64, page, size int) ([]*MyReviewInfo, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if size <= 0 || size > 50 {
+		size = 10
+	}
+	offset := (page - 1) * size
+	limit := size
+	uc.log.WithContext(ctx).Debugf("[biz] ListReviewByStoreID storeID:%v", storeID)
+	return uc.repo.ListReviewByStoreID(ctx, storeID, offset, limit)
+}
+
+// 解决es中的时间反序列化报错问题
+type MyReviewInfo struct {
+	*model.ReviewInfo
+	CreateAt MyTime `json:"create_at"`
+	UpdateAt MyTime `json:"create_at"`
+
+	// ,string 这个选项告诉编码器将结构体字段的值以JSON字符串的形式处理，而不是默认的类型。比如int64会被转换成字符串类型的数字，而不是JSON的number
+	CreateBy     string     `json:"create_by,string"`     // 创建方标识
+	UpdateBy     string     `json:"update_by,string"`     // 更新方标识
+	DeleteAt     *time.Time `json:"delete_at,string"`     // 逻辑删除标记
+	Version      int32      `json:"version,string"`       // 乐观锁标记
+	ReviewID     int64      `json:"review_id,string"`     // 评价id
+	Content      string     `json:"content,string"`       // 评价内容
+	Score        int32      `json:"score,string"`         // 评分
+	ServiceScore int32      `json:"service_score,string"` // 商家服务评分
+	ExpressScore int32      `json:"express_score,string"` // 物流评分
+	HasMedia     int32      `json:"has_media,string"`     // 是否有图或视频
+	OrderID      int64      `json:"order_id,string"`      // 订单id
+	SkuID        int64      `json:"sku_id,string"`        // sku id
+	SpuID        int64      `json:"spu_id,string"`        // spu id
+	StoreID      int64      `json:"store_id,string"`      // 店铺id
+	UserID       int64      `json:"user_id,string"`       // 用户id
+
+}
+
+type MyTime time.Time
+
+func (t *MyTime) UnmarshalJSON(data []byte) (err error) {
+	s := strings.Trim(string(data), `"`)
+	temp, err := time.Parse(time.DateTime, s)
+	if err != nil {
+		return err
+	}
+	*t = MyTime(temp)
+	return nil
 }

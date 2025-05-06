@@ -2,7 +2,10 @@ package data
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"review-service/internal/biz"
 	"review-service/internal/data/model"
 	"review-service/internal/data/query"
@@ -208,4 +211,44 @@ func (r *reviewRepo) ListReviewByUserID(ctx context.Context, userID int64, offse
 		Limit(limit).
 		Offset(offset).
 		Find()
+}
+
+// ListReviewByStoreID 根据storeID分页查询
+func (r *reviewRepo) ListReviewByStoreID(ctx context.Context, storeID int64, offset, limit int) ([]*biz.MyReviewInfo, error) {
+	//去es中查询
+	resp, err := r.data.es.Search().Index("review").
+		From(offset).
+		Size(limit).
+		Query(&types.Query{
+			Bool: &types.BoolQuery{
+				Filter: []types.Query{
+					{
+						Term: map[string]types.TermQuery{
+							"store_id": {
+								Value: storeID,
+							},
+						},
+					},
+				},
+			},
+		}).Do(ctx)
+
+	fmt.Printf("---> es search resp:%v ,%v\n", resp, err)
+	if err != nil {
+		return nil, err
+	}
+	list := make([]*biz.MyReviewInfo, 0, resp.Hits.Total.Value)
+	for _, hit := range resp.Hits.Hits {
+		temp := &biz.MyReviewInfo{}
+		if err := json.Unmarshal(hit.Source_, temp); err != nil {
+			r.log.Errorf("ReviewInfoJson Unmarshal err:%v", err)
+			continue
+		}
+		list = append(list, temp)
+	}
+
+	fmt.Printf("es reuslt:Resp:%v\n", resp.Hits.Total.Value)
+	fmt.Printf("es reuslt:%+v\n", resp.Hits.Hits)
+	return list, nil
+
 }

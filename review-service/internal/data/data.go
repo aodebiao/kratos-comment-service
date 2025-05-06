@@ -3,6 +3,7 @@ package data
 import (
 	"errors"
 	"fmt"
+	"github.com/elastic/go-elasticsearch/v8"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -16,17 +17,18 @@ import (
 
 // ProviderSet is data providers.
 // var ProviderSet = wire.NewSet(NewData, NewGreeterRepo, NewReviewRepo, NewDB)
-var ProviderSet = wire.NewSet(NewData, NewReviewRepo, NewDB)
+var ProviderSet = wire.NewSet(NewData, NewReviewRepo, NewDB, NewESClient)
 
 // Data .
 type Data struct {
 	// TODO wrapped database client
 	query *query.Query
 	log   *log.Helper
+	es    *elasticsearch.TypedClient
 }
 
 // NewData .
-func NewData(db *gorm.DB, logger log.Logger) (*Data, func(), error) {
+func NewData(db *gorm.DB, esClient *elasticsearch.TypedClient, logger log.Logger) (*Data, func(), error) {
 	cleanup := func() {
 		log.NewHelper(logger).Info("closing the data resources")
 	}
@@ -34,8 +36,16 @@ func NewData(db *gorm.DB, logger log.Logger) (*Data, func(), error) {
 	query.SetDefault(db)
 	return &Data{
 		query: query.Q,
+		es:    esClient,
 		log:   log.NewHelper(logger),
 	}, cleanup, nil
+}
+
+func NewESClient(cfg *conf.Elasticsearch) (*elasticsearch.TypedClient, error) {
+	escfg := elasticsearch.Config{
+		Addresses: cfg.Addresses,
+	}
+	return elasticsearch.NewTypedClient(escfg)
 }
 
 func NewDB(c *conf.Data) (*gorm.DB, error) {

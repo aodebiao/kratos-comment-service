@@ -6,6 +6,7 @@ toolchain go1.23.3
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0
+	github.com/elastic/go-elasticsearch/v8 v8.18.0
 	github.com/envoyproxy/protoc-gen-validate v1.2.1
 	github.com/go-kratos/kratos/contrib/registry/consul/v2 v2.0.0-20250403070952-9580f086e326
 	github.com/go-kratos/kratos/v2 v2.8.4
@@ -25,6 +26,7 @@ require (
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
+	github.com/elastic/elastic-transport-go/v8 v8.7.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-kratos/aegis v0.2.0 // indirect
