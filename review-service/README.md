@@ -309,4 +309,31 @@ flush privileges; # 刷新权限
 
 ### docker exec -it canal-server /bin/bash
 
-### 
+### json tag中的`,string`选项，可以用来指定从什么类型序列化
+```
+    {
+          "id": 1,
+          "userID": "147982601",
+          "score": "5",
+          "status": "2",
+          "publishTime": "2023-09-09T16:07:42.499144+08:00",
+          "content": "这是一个好评！",
+          "orderID": "1231231",
+          "store_id": "7890"
+        }
+上面的数据全是字符串类型
+type test struct {
+  score int64 `json:"score,string"`      
+  orderID int64 `json:"orderID,string"`      
+  store_id int64 `json:"store_id,string"`      
+
+}
+
+// 加了,string选项后，才能正确的反序列化，且序列化时，也能将score变成字符串返回
+
+```
+
+
+#### kratos openApi swagger使用
+- go install github.com/google/gnostic/cmd/protoc-gen-openapi@latest
+- protoc -I=. -I=./third_party --openapi_out=fq_schema_naming=true,default_response=false:. api/hellworld/v1/greeter.proto

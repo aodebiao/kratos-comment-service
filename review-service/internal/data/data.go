@@ -4,20 +4,20 @@ import (
 	"errors"
 	"fmt"
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/go-kratos/kratos/v2/log"
+	"github.com/google/wire"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"review-service/internal/conf"
 	"review-service/internal/data/query"
 	"strings"
-
-	"github.com/go-kratos/kratos/v2/log"
-	"github.com/google/wire"
 )
 
 // ProviderSet is data providers.
 // var ProviderSet = wire.NewSet(NewData, NewGreeterRepo, NewReviewRepo, NewDB)
-var ProviderSet = wire.NewSet(NewData, NewReviewRepo, NewDB, NewESClient)
+var ProviderSet = wire.NewSet(NewData, NewReviewRepo, NewDB, NewESClient, NewRedisClient)
 
 // Data .
 type Data struct {
@@ -25,10 +25,11 @@ type Data struct {
 	query *query.Query
 	log   *log.Helper
 	es    *elasticsearch.TypedClient
+	rdb   *redis.Client
 }
 
 // NewData .
-func NewData(db *gorm.DB, esClient *elasticsearch.TypedClient, logger log.Logger) (*Data, func(), error) {
+func NewData(db *gorm.DB, esClient *elasticsearch.TypedClient, rclient *redis.Client, logger log.Logger) (*Data, func(), error) {
 	cleanup := func() {
 		log.NewHelper(logger).Info("closing the data resources")
 	}
@@ -37,8 +38,17 @@ func NewData(db *gorm.DB, esClient *elasticsearch.TypedClient, logger log.Logger
 	return &Data{
 		query: query.Q,
 		es:    esClient,
+		rdb:   rclient,
 		log:   log.NewHelper(logger),
 	}, cleanup, nil
+}
+
+func NewRedisClient(cfg *conf.Data) *redis.Client {
+	return redis.NewClient(&redis.Options{
+		Addr:         cfg.Redis.Addr,
+		ReadTimeout:  cfg.Redis.ReadTimeout.AsDuration(),
+		WriteTimeout: cfg.Redis.WriteTimeout.AsDuration(),
+	})
 }
 
 func NewESClient(cfg *conf.Elasticsearch) (*elasticsearch.TypedClient, error) {

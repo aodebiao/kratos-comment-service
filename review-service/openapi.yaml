@@ -3,10 +3,83 @@
 
 openapi: 3.0.3
 info:
-    title: Review API
-    description: 定义评价服务
+    title: ""
     version: 0.0.1
 paths:
+    /b/v1/review/appeal:
+        post:
+            tags:
+                - Business
+            description: 商家申诉用户评价
+            operationId: Business_AppealReview
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.business.v1.AppealReviewRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.business.v1.AppealReviewReply'
+    /b/v1/review/reply:
+        post:
+            tags:
+                - Business
+            description: 商家回复用户评价
+            operationId: Business_ReplyReview
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.business.v1.ReplyReviewRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.business.v1.ReplyReviewReply'
+    /o/v1/appeal/audit:
+        post:
+            tags:
+                - Operation
+            operationId: Operation_AuditAppeal
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.operation.v1.AuditAppealRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.operation.v1.AuditAppealReply'
+    /o/v1/review/audit:
+        post:
+            tags:
+                - Operation
+            operationId: Operation_AuditReview
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.operation.v1.AuditReviewRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.operation.v1.AuditReviewReply'
     /v1/appeal/audit:
         post:
             tags:
@@ -17,7 +90,7 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/AuditAppealRequest'
+                            $ref: '#/components/schemas/api.review.v1.AuditAppealRequest'
                 required: true
             responses:
                 "200":
@@ -25,13 +98,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/AuditAppealReply'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
+                                $ref: '#/components/schemas/api.review.v1.AuditAppealReply'
     /v1/review:
         post:
             tags:
@@ -42,7 +109,7 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/CreateReviewRequest'
+                            $ref: '#/components/schemas/api.review.v1.CreateReviewRequest'
                 required: true
             responses:
                 "200":
@@ -50,13 +117,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/CreateReviewReply'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
+                                $ref: '#/components/schemas/api.review.v1.CreateReviewReply'
     /v1/review/appeal:
         post:
             tags:
@@ -67,7 +128,7 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/AppealReviewRequest'
+                            $ref: '#/components/schemas/api.review.v1.AppealReviewRequest'
                 required: true
             responses:
                 "200":
@@ -75,13 +136,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/AppealReviewReply'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
+                                $ref: '#/components/schemas/api.review.v1.AppealReviewReply'
     /v1/review/audit:
         post:
             tags:
@@ -92,7 +147,7 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/AuditReviewRequest'
+                            $ref: '#/components/schemas/api.review.v1.AuditReviewRequest'
                 required: true
             responses:
                 "200":
@@ -100,13 +155,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/AuditReviewReply'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
+                                $ref: '#/components/schemas/api.review.v1.AuditReviewReply'
     /v1/review/reply:
         post:
             tags:
@@ -117,7 +166,7 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/ReplyReviewRequest'
+                            $ref: '#/components/schemas/api.review.v1.ReplyReviewRequest'
                 required: true
             responses:
                 "200":
@@ -125,13 +174,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/ReplyReviewReply'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
+                                $ref: '#/components/schemas/api.review.v1.ReplyReviewReply'
     /v1/review/{reviewID}:
         get:
             tags:
@@ -150,13 +193,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/GetReviewReply'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
+                                $ref: '#/components/schemas/api.review.v1.GetReviewReply'
     /v1/{userID}/reviews:
         get:
             tags:
@@ -169,28 +206,31 @@ paths:
                   required: true
                   schema:
                     type: string
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: size
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
             responses:
                 "200":
                     description: OK
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/ListReviewByUserIDReply'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
+                                $ref: '#/components/schemas/api.review.v1.ListReviewByUserIDReply'
 components:
     schemas:
-        AppealReviewReply:
+        api.business.v1.AppealReviewReply:
             type: object
             properties:
                 appealID:
                     type: string
-            description: 对评价进行申诉的返回值
-        AppealReviewRequest:
+        api.business.v1.AppealReviewRequest:
             type: object
             properties:
                 reviewID:
@@ -206,16 +246,94 @@ components:
                 videoInfo:
                     type: string
             description: AppealReviewRequest 申诉评价的请求参数
-        AuditAppealReply:
+        api.business.v1.ReplyReviewReply:
+            type: object
+            properties:
+                replyID:
+                    type: string
+            description: 回复评价的返回值
+        api.business.v1.ReplyReviewRequest:
+            type: object
+            properties:
+                reviewID:
+                    type: string
+                storeID:
+                    type: string
+                content:
+                    type: string
+                picInfo:
+                    type: string
+                videoInfo:
+                    type: string
+        api.operation.v1.AuditAppealReply:
+            type: object
+            properties: {}
+            description: 对申诉进行审核的返回值
+        api.operation.v1.AuditAppealRequest:
             type: object
             properties:
                 appealID:
                     type: string
-            description: 对申诉进行审核的返回值
-        AuditAppealRequest:
+                reviewID:
+                    type: string
+                status:
+                    type: integer
+                    format: int32
+                opUser:
+                    type: string
+                opReason:
+                    type: string
+                opRemarks:
+                    type: string
+        api.operation.v1.AuditReviewReply:
+            type: object
+            properties: {}
+        api.operation.v1.AuditReviewRequest:
+            type: object
+            properties:
+                reviewID:
+                    type: string
+                status:
+                    type: integer
+                    format: int32
+                opUser:
+                    type: string
+                opReason:
+                    type: string
+                opRemarks:
+                    type: string
+        api.review.v1.AppealReviewReply:
             type: object
             properties:
                 appealID:
+                    type: string
+            description: 对评价进行申诉的返回值
+        api.review.v1.AppealReviewRequest:
+            type: object
+            properties:
+                reviewID:
+                    type: string
+                storeID:
+                    type: string
+                reason:
+                    type: string
+                content:
+                    type: string
+                picInfo:
+                    type: string
+                videoInfo:
+                    type: string
+            description: AppealReviewRequest 申诉评价的请求参数
+        api.review.v1.AuditAppealReply:
+            type: object
+            properties: {}
+            description: 对申诉进行审核的返回值
+        api.review.v1.AuditAppealRequest:
+            type: object
+            properties:
+                appealID:
+                    type: string
+                reviewID:
                     type: string
                 status:
                     type: integer
@@ -225,7 +343,7 @@ components:
                 opRemarks:
                     type: string
             description: 对申诉进行审核的请求
-        AuditReviewReply:
+        api.review.v1.AuditReviewReply:
             type: object
             properties:
                 reviewID:
@@ -234,7 +352,7 @@ components:
                     type: integer
                     format: int32
             description: 审核评价的返回值
-        AuditReviewRequest:
+        api.review.v1.AuditReviewRequest:
             type: object
             properties:
                 reviewID:
@@ -249,18 +367,20 @@ components:
                 opRemarks:
                     type: string
             description: 审核评价的请求
-        CreateReviewReply:
+        api.review.v1.CreateReviewReply:
             type: object
             properties:
                 reviewID:
                     type: string
             description: 创建评价的回复
-        CreateReviewRequest:
+        api.review.v1.CreateReviewRequest:
             type: object
             properties:
                 userID:
                     type: string
                 orderID:
+                    type: string
+                storeID:
                     type: string
                 score:
                     type: integer
@@ -280,35 +400,27 @@ components:
                 anonymous:
                     type: boolean
             description: 创建评价的参数
-        GetReviewReply:
+        api.review.v1.GetReviewReply:
             type: object
             properties:
                 data:
-                    $ref: '#/components/schemas/ReviewInfo'
+                    $ref: '#/components/schemas/api.review.v1.ReviewInfo'
             description: 获取评价详情的响应
-        GoogleProtobufAny:
-            type: object
-            properties:
-                '@type':
-                    type: string
-                    description: The type of the serialized message.
-            additionalProperties: true
-            description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
-        ListReviewByUserIDReply:
+        api.review.v1.ListReviewByUserIDReply:
             type: object
             properties:
                 list:
                     type: array
                     items:
-                        $ref: '#/components/schemas/ReviewInfo'
+                        $ref: '#/components/schemas/api.review.v1.ReviewInfo'
             description: 用户评价列表的返回值
-        ReplyReviewReply:
+        api.review.v1.ReplyReviewReply:
             type: object
             properties:
                 replyID:
                     type: string
             description: 回复评价的返回值
-        ReplyReviewRequest:
+        api.review.v1.ReplyReviewRequest:
             type: object
             properties:
                 reviewID:
@@ -322,7 +434,7 @@ components:
                 videoInfo:
                     type: string
             description: 回复评价的请求
-        ReviewInfo:
+        api.review.v1.ReviewInfo:
             type: object
             properties:
                 reviewID:
@@ -350,21 +462,10 @@ components:
                     type: integer
                     format: int32
             description: 评价信息
-        Status:
-            type: object
-            properties:
-                code:
-                    type: integer
-                    description: The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
-                    format: int32
-                message:
-                    type: string
-                    description: A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
-                details:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/GoogleProtobufAny'
-                    description: A list of messages that carry the error details.  There is a common set of message types for APIs to use.
-            description: 'The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).'
 tags:
+    - name: Business
+      description: 商家端服务
+    - name: Operation
+      description: 运营端服务
     - name: Review
+      description: 定义评价服务

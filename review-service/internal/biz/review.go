@@ -137,21 +137,18 @@ type MyReviewInfo struct {
 	UpdateAt MyTime `json:"create_at"`
 
 	// ,string 这个选项告诉编码器将结构体字段的值以JSON字符串的形式处理，而不是默认的类型。比如int64会被转换成字符串类型的数字，而不是JSON的number
-	CreateBy     string     `json:"create_by,string"`     // 创建方标识
-	UpdateBy     string     `json:"update_by,string"`     // 更新方标识
-	DeleteAt     *time.Time `json:"delete_at,string"`     // 逻辑删除标记
-	Version      int32      `json:"version,string"`       // 乐观锁标记
-	ReviewID     int64      `json:"review_id,string"`     // 评价id
-	Content      string     `json:"content,string"`       // 评价内容
-	Score        int32      `json:"score,string"`         // 评分
-	ServiceScore int32      `json:"service_score,string"` // 商家服务评分
-	ExpressScore int32      `json:"express_score,string"` // 物流评分
-	HasMedia     int32      `json:"has_media,string"`     // 是否有图或视频
-	OrderID      int64      `json:"order_id,string"`      // 订单id
-	SkuID        int64      `json:"sku_id,string"`        // sku id
-	SpuID        int64      `json:"spu_id,string"`        // spu id
-	StoreID      int64      `json:"store_id,string"`      // 店铺id
-	UserID       int64      `json:"user_id,string"`       // 用户id
+	CreateBy string     `json:"create_by,string"` // 创建方标识
+	UpdateBy string     `json:"update_by,string"` // 更新方标识
+	DeleteAt *time.Time `json:"delete_at,string"` // 逻辑删除标记
+	Version  int32      `json:"version,string"`   // 乐观锁标记
+	ReviewID int64      `json:"review_id,string"` // 评价id
+	Content  string     `json:"content,string"`   // 评价内容
+	Score    int32      `json:"score"`            // 评分
+	OrderID  int64      `json:"order_id"`         // 订单id
+	SkuID    int64      `json:"sku_id,string"`    // sku id
+	SpuID    int64      `json:"spu_id,string"`    // spu id
+	StoreID  int64      `json:"store_id"`         // 店铺id
+	UserID   int64      `json:"user_id"`          // 用户id
 
 }
 

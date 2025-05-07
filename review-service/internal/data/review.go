@@ -6,10 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/redis/go-redis/v9"
+	"golang.org/x/sync/singleflight"
 	"review-service/internal/biz"
 	"review-service/internal/data/model"
 	"review-service/internal/data/query"
 	"review-service/pkg/snowflake"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
@@ -215,7 +220,14 @@ func (r *reviewRepo) ListReviewByUserID(ctx context.Context, userID int64, offse
 
 // ListReviewByStoreID 根据storeID分页查询
 func (r *reviewRepo) ListReviewByStoreID(ctx context.Context, storeID int64, offset, limit int) ([]*biz.MyReviewInfo, error) {
+
+	return r.getData2(ctx, storeID, offset, limit)
 	//去es中查询
+	//return r.getData1(ctx, storeID, offset, limit)
+
+}
+
+func (r *reviewRepo) getData1(ctx context.Context, storeID int64, offset int, limit int) ([]*biz.MyReviewInfo, error) {
 	resp, err := r.data.es.Search().Index("review").
 		From(offset).
 		Size(limit).
@@ -250,5 +262,111 @@ func (r *reviewRepo) ListReviewByStoreID(ctx context.Context, storeID int64, off
 	fmt.Printf("es reuslt:Resp:%v\n", resp.Hits.Total.Value)
 	fmt.Printf("es reuslt:%+v\n", resp.Hits.Hits)
 	return list, nil
+}
 
+var g singleflight.Group
+
+// 升级版，带缓存
+func (r *reviewRepo) getData2(ctx context.Context, storeID int64, offset, limit int) ([]*biz.MyReviewInfo, error) {
+	// 1.先查询缓存
+
+	// 2.缓存没有则查es
+	// 3.通过singleflight合并短时间内大量的并发请求
+	key := fmt.Sprintf("review:%d:%d:%d", storeID, offset, limit)
+	data, err := r.getDataBySingleflight(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+	hm := new(types.HitsMetadata)
+	if err := json.Unmarshal(data, hm); err != nil {
+		return nil, err
+	}
+	// 反序列化
+	list := make([]*biz.MyReviewInfo, 0, hm.Total.Value)
+	for _, hit := range hm.Hits {
+		temp := &biz.MyReviewInfo{}
+		if err := json.Unmarshal(hit.Source_, temp); err != nil {
+			r.log.Errorf("ReviewInfoJson Unmarshal err:%v", err)
+			continue
+		}
+		list = append(list, temp)
+	}
+	return list, nil
+}
+
+// key review:231231:1:10
+func (r *reviewRepo) getDataBySingleflight(ctx context.Context, key string) ([]byte, error) {
+	v, err, share := g.Do(key, func() (interface{}, error) {
+		data, err := r.getDataFromCache(ctx, key)
+		r.log.Debugf("getDataFromCache,data:%s, err:%v", data, err)
+		if err == nil {
+			return data, nil
+		}
+		// 只有在缓存中没有这个key时，才查询
+		if errors.Is(err, redis.Nil) {
+			// 缓存中没有这个key,查es
+			data, err := r.getDataFromES(ctx, key)
+			r.log.Debugf("getDataFromES,data:%v, err:%v", data, err)
+			if err == nil {
+				// 设置缓存
+
+				return data, r.setCache(ctx, key, data)
+			}
+			return nil, err
+		}
+		// 查缓存失败,直接返回，不继续向下传导压力
+		return nil, err
+	})
+	r.log.Debugf("getDataBySingleflight,v:%v,err:%v share:%v", v, err, share)
+	if err != nil {
+		return nil, err
+	}
+	return v.([]byte), nil
+}
+
+func (r *reviewRepo) setCache(ctx context.Context, key string, data []byte) error {
+	return r.data.rdb.Set(ctx, key, data, time.Second*20).Err()
+}
+
+func (r *reviewRepo) getDataFromCache(ctx context.Context, key string) ([]byte, error) {
+	r.log.Debugf("getDataFromCache, key:%v", key)
+	return r.data.rdb.Get(ctx, key).Bytes()
+}
+
+func (r *reviewRepo) getDataFromES(ctx context.Context, key string) ([]byte, error) {
+	r.log.Debugf("getDataFromES, key:%v", key)
+	values := strings.Split(key, ":")
+	if len(values) < 4 {
+		return nil, errors.New("invalid key")
+	}
+	index, storeID, offsetStr, limitStr := values[0], values[1], values[2], values[3]
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil {
+		return nil, err
+	}
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := r.data.es.Search().Index(index).
+		From(offset).
+		Size(limit).
+		Query(&types.Query{
+			Bool: &types.BoolQuery{
+				Filter: []types.Query{
+					{
+						Term: map[string]types.TermQuery{
+							"store_id": {
+								Value: storeID,
+							},
+						},
+					},
+				},
+			},
+		}).Do(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(resp.Hits)
 }
